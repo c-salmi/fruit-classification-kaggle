@@ -1,0 +1,16 @@
+[project]
+name = "fruit-classification-kaggle"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "ipykernel>=6.29.5",
+    "matplotlib>=3.10.3",
+    "notebook>=7.4.4",
+    "numpy>=2.3.1",
+    "pandas>=2.3.1",
+    "pillow>=11.3.0",
+    "polars>=1.31.0",
+    "seaborn>=0.13.2",
+]
