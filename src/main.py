@@ -11,7 +11,16 @@ def main():
     batch_size = 64
     epochs = 10
 
-    train_loader, val_loader, classes = get_data_loaders(data_dir, batch_size)
+    # Augmentation parameters
+    use_augmentation = True
+    augmentation_strength = "medium"  # "light", "medium", or "heavy"
+
+    train_loader, val_loader, classes = get_data_loaders(
+        data_dir,
+        batch_size,
+        use_augmentation=use_augmentation,
+        augmentation_strength=augmentation_strength,
+    )
     device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     print(f"Using device: {device}")
 
@@ -21,13 +30,18 @@ def main():
 
     model = SimpleCNN(num_classes=len(classes)).to(device)
 
+    # Create run name based on augmentation settings
+    run_name = f"cnn-aug-{augmentation_strength}" if use_augmentation else "cnn-no-aug"
+
     trained_model = train(
         model,
         train_loader,
         val_loader,
         device,
         epochs=epochs,
-        run_name="baseline-cnn",
+        run_name=run_name,
+        use_augmentation=use_augmentation,
+        augmentation_strength=augmentation_strength,
     )
 
     torch.save(trained_model.state_dict(), "models/simple_cnn.pth")

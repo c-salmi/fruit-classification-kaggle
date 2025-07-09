@@ -14,6 +14,8 @@ def train(
     epochs: int = 5,
     lr: float = 0.001,
     run_name: str = "baseline-cnn",
+    use_augmentation: bool = True,
+    augmentation_strength: str = "medium",
 ):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
@@ -24,6 +26,9 @@ def train(
         mlflow.log_param("learning_rate", lr)
         mlflow.log_param("optimizer", "Adam")
         mlflow.log_param("model_type", model.__class__.__name__)
+        mlflow.log_param("use_augmentation", use_augmentation)
+        if use_augmentation:
+            mlflow.log_param("augmentation_strength", augmentation_strength)
 
         for epoch in range(epochs):
             model.train()
@@ -49,19 +54,19 @@ def train(
             epoch_loss = running_loss / total
             epoch_acc = correct / total
 
-            val_acc = evaluate(model, val_loader, device)
+            val_acc, val_loss = evaluate(model, val_loader, criterion, device)
 
             # 🔑 Log metrics per epoch
             mlflow.log_metric("train_loss", epoch_loss, step=epoch)
             mlflow.log_metric("train_acc", epoch_acc, step=epoch)
             mlflow.log_metric("val_acc", val_acc, step=epoch)
+            mlflow.log_metric("val_loss", val_loss, step=epoch)
 
             loop.set_postfix(
                 train_loss=epoch_loss, train_acc=epoch_acc, val_acc=val_acc
             )
 
-        # 🔑 Log final model
-        mlflow.pytorch.log_model(model, f"models/{run_name}", input_example=inputs)
+        # mlflow.pytorch.log_model(model, f"models-{run_name}", input_example=inputs)
 
         print("Training complete. Final model logged to MLflow.")
 
@@ -69,17 +74,20 @@ def train(
 
 
 # Optionally:
-def evaluate(model, val_loader, device):
+def evaluate(model, val_loader, criterion, device):
     model.eval()
     correct = 0
     total = 0
+    loss = 0
 
     with torch.no_grad():
         for inputs, labels in val_loader:
             inputs, labels = inputs.to(device), labels.to(device)
             outputs = model(inputs)
+            loss = criterion(outputs, labels)
             _, predicted = torch.max(outputs, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
+            loss += loss.item()
 
-    return correct / total
+    return correct / total, loss / len(val_loader)

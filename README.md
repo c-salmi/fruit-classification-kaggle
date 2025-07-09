@@ -12,4 +12,6 @@ My **exploratory data analysis** (EDA) can be found in the `notebooks/eda.ipynb`
 
 Based on my finding, we already have a decently large dataset and the samples seem quite diverse per class. This makes me think augmentation is not immediately needed. But I will come back to it at a later stage.
 
-###
+### Baseline
+
+Now that we have inspected the data, I will start with a simple architecture and no data augmentation to achieve a solid baseline. From the baseline we will inspect the loss curves to judge how we can improve.
