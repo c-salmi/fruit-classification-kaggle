@@ -2,3 +2,6 @@ data
 .venv
 .DS_Store
 **/*.pyc
+mlruns
+mlartifacts
+models
