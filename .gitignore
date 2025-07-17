@@ -5,3 +5,4 @@ data
 mlruns
 mlartifacts
 models
+lightning_logs
