@@ -1,0 +1,32 @@
+Classification Report:
+==================================================
+Test Loss: 0.3046
+Test Accuracy: 0.9220
+Number of Samples: 1000
+
+                 precision    recall  f1-score   support
+
+           abiu       0.78      0.92      0.84        50
+           acai       0.96      1.00      0.98        50
+        acerola       0.94      0.92      0.93        50
+          ackee       1.00      0.96      0.98        50
+      ambarella       0.95      0.72      0.82        50
+          apple       0.96      0.92      0.94        50
+        apricot       0.92      0.94      0.93        50
+        avocado       0.96      0.88      0.92        50
+         banana       1.00      0.96      0.98        50
+      barbadine       0.90      0.92      0.91        50
+       barberry       0.94      0.92      0.93        50
+      betel_nut       0.81      0.88      0.85        50
+   bitter_gourd       0.96      0.98      0.97        50
+    black_berry       0.87      0.82      0.85        50
+black_mullberry       0.83      0.86      0.84        50
+     brazil_nut       0.96      0.98      0.97        50
+      camu_camu       0.96      1.00      0.98        50
+         cashew       1.00      0.92      0.96        50
+       cempedak       0.91      0.96      0.93        50
+         chenet       0.89      0.98      0.93        50
+
+       accuracy                           0.92      1000
+      macro avg       0.92      0.92      0.92      1000
+   weighted avg       0.92      0.92      0.92      1000

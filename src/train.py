@@ -1,9 +1,11 @@
 import mlflow
-import mlflow.pytorch
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from tqdm import tqdm
+from src.dataset import get_data_loaders
+from src.model import SimpleCNN
+
 
 
 def train(
@@ -12,7 +14,7 @@ def train(
     val_loader,
     device,
     epochs: int = 5,
-    lr: float = 0.001,
+    lr: float = 0.0001,
     run_name: str = "baseline-cnn",
     use_augmentation: bool = True,
     augmentation_strength: str = "medium",
@@ -57,10 +59,11 @@ def train(
             val_acc, val_loss = evaluate(model, val_loader, criterion, device)
 
             # 🔑 Log metrics per epoch
-            mlflow.log_metric("train_loss", epoch_loss, step=epoch)
-            mlflow.log_metric("train_acc", epoch_acc, step=epoch)
-            mlflow.log_metric("val_acc", val_acc, step=epoch)
-            mlflow.log_metric("val_loss", val_loss, step=epoch)
+            s = epoch*len(train_loader)
+            mlflow.log_metric("train_loss_epoch", epoch_loss, step=s)
+            mlflow.log_metric("train_acc_epoch", epoch_acc, step=s)
+            mlflow.log_metric("val_acc", val_acc, step=s)
+            mlflow.log_metric("val_loss", val_loss, step=s)
 
             loop.set_postfix(
                 train_loss=epoch_loss, train_acc=epoch_acc, val_acc=val_acc
@@ -91,3 +94,57 @@ def evaluate(model, val_loader, criterion, device):
             loss += loss.item()
 
     return correct / total, loss / len(val_loader)
+
+
+def main():
+    data_dir = "data/Fruit_dataset"  # adjust as needed
+    batch_size = 64
+    epochs = 20
+    experiment_name = "fruit-classification-simple-cnn"
+    num_classes = 20
+
+    # Augmentation parameters
+    use_augmentation = False
+    augmentation_strength = "medium"  # "light", "medium", or "heavy"
+
+    train_loader, val_loader, classes = get_data_loaders(
+        data_dir,
+        batch_size,
+        use_augmentation=use_augmentation,
+        augmentation_strength=augmentation_strength,
+        num_classes=num_classes,
+    )
+    device = torch.device(
+        "cuda"
+        if torch.cuda.is_available()
+        else "mps"
+        if torch.backends.mps.is_available()
+        else "cpu"
+    )
+    print(f"Using device: {device}")
+
+    mlflow.set_tracking_uri("http://localhost:8080")
+    mlflow.set_experiment(experiment_name)
+
+    model = SimpleCNN(num_classes=num_classes).to(device)
+
+    # Create run name based on augmentation settings
+    run_name = f"cnn-aug-{augmentation_strength}-low-lr"
+
+    trained_model = train(
+        model,
+        train_loader,
+        val_loader,
+        device,
+        epochs=epochs,
+        run_name=run_name,
+        use_augmentation=use_augmentation,
+        augmentation_strength=augmentation_strength,
+    )
+
+    torch.save(trained_model.state_dict(), "models/simple_cnn.pth")
+    print("Model saved!")
+
+
+if __name__ == "__main__":
+    main()
