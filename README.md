@@ -1,6 +1,9 @@
 # Fruit Classification Kaggle Challenge
 
-To sharpen my computer vision skills, I tackled a Kaggle challenge centered on classifying 100 different fruits. The dataset is nicely balanced, with each fruit class offering ~400 images for training, 50 for validation, and 50 for testing—a solid foundation to get started.
+To sharpen my computer vision skills, I tackled a Kaggle challenge centered on classifying 100 different fruits. The dataset is nicely balanced, with each fruit class offering ~400 images for training, 50 for validation, and 50 for testing. I will only focus on classifying the first 20 fruit classes though to keep the training times managable. 
+
+Here's some example images:
+![Examples](assets/examples.png)
 
 ## Methodology
 
@@ -38,3 +41,6 @@ To ensure no sneaky issues, I tested on the test set and scored a respectable 92
 
 ![Confusion Matrix](test_results/epoch=12-val_acc=0.922_confusion_matrix.png)
 
+Finally here's a few random examples and the predictions of the model:
+
+![Random Samples](test_results/epoch=12-val_acc=0.922_random_test_images.png)

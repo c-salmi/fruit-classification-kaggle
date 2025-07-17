@@ -11,11 +11,13 @@ import os
 import json
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
+import random
 
 import torch
 import torch.nn as nn
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 import seaborn as sns
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 from torch.utils.data import DataLoader
@@ -336,6 +338,91 @@ def plot_top_k_accuracy(results: Dict, classes: List[str], output_dir: str, mode
     print(f"Top-k accuracy plot saved to {plot_file}")
 
 
+def plot_random_test_images(model: ResNetLightningModule, test_loader: DataLoader, classes: List[str], output_dir: str, model_name: str, device: str = 'cpu', num_images: int = 10):
+    """
+    Plot a subplot of randomly selected test images with their predictions and success/failure indicators.
+    
+    Args:
+        model: The trained model
+        test_loader: Test data loader
+        classes: List of class names
+        output_dir: Directory to save plot
+        model_name: Name of the model for file naming
+        device: Device to run model on
+        num_images: Number of images to plot (default 10 for 2x5 grid)
+    """
+    model.eval()
+    
+    # Get a random sample of images from the entire dataset
+    dataset_size = len(test_loader.dataset)
+    all_indices = list(range(dataset_size))
+    selected_indices = random.sample(all_indices, num_images)
+    
+    # Create a figure with subplots (2 rows, 5 columns)
+    fig, axes = plt.subplots(2, 5, figsize=(20, 8))
+    axes = axes.flatten()  # Flatten for easier indexing
+    
+    for i, idx in enumerate(selected_indices):
+        # Get the image and target
+        image, target = test_loader.dataset[idx]
+        
+        # Prepare image for model input
+        image_batch = image.unsqueeze(0).to(device)
+        
+        # Get prediction
+        with torch.no_grad():
+            output = model(image_batch)
+            probabilities = torch.softmax(output, dim=1)
+            predicted_class_idx = torch.argmax(output, dim=1).item()
+        
+        # Convert image to numpy array for plotting
+        image_np = image.permute(1, 2, 0).numpy()
+        image_np = (image_np * 0.5 + 0.5)  # Inverse normalization for display
+        image_np = np.clip(image_np, 0, 1)  # Clip to valid range
+        
+        # Get class names - handle both tensor and int targets
+        if hasattr(target, 'item'):
+            target_idx = int(target.item())
+        else:
+            target_idx = int(target)
+        true_class_name = classes[target_idx]
+        predicted_class_name = classes[predicted_class_idx]
+        
+        # Determine success/failure
+        is_correct = (predicted_class_idx == target_idx)
+        
+        # Plot image
+        axes[i].imshow(image_np)
+        axes[i].set_title(f"True: {true_class_name}\nPred: {predicted_class_name}", fontsize=10)
+        axes[i].axis('off')
+        
+        # Add success/failure indicator
+        if is_correct:
+            # Green circle for correct prediction
+            circle = patches.Circle((0.1, 0.9), 0.05, transform=axes[i].transAxes, 
+                                  facecolor='green', edgecolor='black', linewidth=2)
+            axes[i].add_patch(circle)
+            axes[i].text(0.1, 0.9, '✓', transform=axes[i].transAxes, 
+                        ha='center', va='center', fontsize=16, fontweight='bold', color='white')
+        else:
+            # Red X for incorrect prediction
+            circle = patches.Circle((0.1, 0.9), 0.05, transform=axes[i].transAxes, 
+                                  facecolor='red', edgecolor='black', linewidth=2)
+            axes[i].add_patch(circle)
+            axes[i].text(0.1, 0.9, '✗', transform=axes[i].transAxes, 
+                        ha='center', va='center', fontsize=16, fontweight='bold', color='white')
+    
+    plt.suptitle(f'Random Test Images - {model_name}', fontsize=16, fontweight='bold')
+    plt.tight_layout()
+    
+    # Save plot
+    plot_file = os.path.join(output_dir, f"{model_name}_random_test_images.png")
+    plt.savefig(plot_file, dpi=300, bbox_inches='tight')
+    plt.close()
+    
+    print(f"Random test images plot saved to {plot_file}")
+
+
 def main():
     checkpoint_path = "/home/chadi/Dev/fruit-classification-kaggle/lightning_logs/resnet50-basic/version_5/checkpoints/epoch=12-val_acc=0.922.ckpt"
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -383,6 +470,7 @@ def main():
         print("\nGenerating plots...")
         plot_confusion_matrix(results['confusion_matrix'], classes, "test_results", model_name)
         plot_top_k_accuracy(results, classes, "test_results", model_name)
+        plot_random_test_images(model, test_loader, classes, "test_results", model_name, device)
     
     print(f"\nEvaluation completed! Results saved to {output_dir}/")
 
